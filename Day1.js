@@ -24,18 +24,22 @@ while (!foundFirst) {
   for (i = 0; i < day1InputNumeric.length; i++) {
     currentFrequency += day1InputNumeric[i];
 
-    for (j = 0; j < prevFrequency.length; j++) {
-
-      if (currentFrequency === prevFrequency[j]) {
-        console.log("First frequency device reaches twice: " + prevFrequency[j]);
-        foundFirst = true;
-        break;
-      }
+    prevFrequency.push(currentFrequency);
+    let pivotIndex = prevFrequency.length - 1;
+    while ((pivotIndex > 0) && 
+           (prevFrequency[pivotIndex - 1] > prevFrequency[pivotIndex]))
+    {
+      let temp = prevFrequency[pivotIndex - 1];
+      prevFrequency[pivotIndex - 1] = prevFrequency[pivotIndex];
+      prevFrequency[pivotIndex] = temp;
+      pivotIndex -= 1;
     }
 
-    if (foundFirst)
+    if (prevFrequency[pivotIndex] == prevFrequency[pivotIndex - 1])
+    {
+      console.log("First frequency device reaches twice: " + prevFrequency[pivotIndex]);
+      foundFirst = true;
       break;
-
-    prevFrequency.push(currentFrequency);
+    }
   }
 }
