@@ -1,15 +1,22 @@
 const fs = require('fs');
 
-var rawDay3Input = fs.readFileSync('./Day3Input.txt');
+var rawDay3Input = fs.readFileSync('./Day3TestInput.txt');
 
 var day3Input = rawDay3Input.toString().split('\r\n');
 
 function IntersectRect(aRect1, aRect2) {
-    let intersectLeft = Math.max(aRect1.left, aRect2.left);
-    let intersectTop = Math.max(aRect1.top, aRect2.top);
-    let xOverlap = Math.max(0, Math.min(aRect1.right, aRect2.right) - intersectLeft);
-    let yOverlap = Math.max(0, Math.min(aRect1.bottom, aRect2.bottom) - intersectTop);
-    return { "area": xOverlap * yOverlap, "rect": { "left": intersectLeft, "right": intersectLeft + xOverlap - 1, "top": intersectTop, "bottom": intersectTop + yOverlap - 1 } };
+    if (aRect1.left < aRect2.right && aRect1.right > aRect2.left &&
+        aRect1.top > aRect2.bottom && aRect1.bottom < aRect2.top) {
+        let left = Math.max(aRect1.left, aRect2.left);
+        let right = Math.min(aRect1.right, aRect2.right);
+        let top = Math.max(aRect1.top, aRect2.top);
+        let bottom = Math.min(aRect1.bottom, aRect2.bottom);
+        let xOverlap = Math.max(0, right - left);
+        let yOverlap = Math.max(0, bottom - top) + 1;
+        return { "intersect": true, "area": xOverlap * yOverlap, "rect": { "left": intersectLeft, "right": intersectLeft + xOverlap, "top": intersectTop, "bottom": intersectTop + yOverlap } };
+    }
+    else
+        return { "intersect": false };
 }
 
 function GetRectArea(aRect) {
@@ -43,19 +50,19 @@ var rectIntersections = [];
 for (i = 0; i < parsedInput.length; i++)
     for (j = i + 1; j < parsedInput.length; j++) {
         let intersect = IntersectRect(parsedInput[i].rect, parsedInput[j].rect);
-        if (intersect.area > 0)
+        if (intersect.area > 0) {
+            console.log(intersect.area);
             rectIntersections.push(intersect.rect);
+        }
     }
 
-var squareInchesIntersect = 0;    
+var squareInchesIntersect = 0;
 for (i = 0; i < rectIntersections.length; i++) {
     squareInchesIntersect += GetRectArea(rectIntersections[i]);
     for (j = i + 1; j < rectIntersections.length; j++) {
-        if (rectIntersections[i].p && rectIntersections[j].p) {
-            let intersect = IntersectRect(rectIntersections[i], rectIntersections[j]);
-            if (intersect.area > 0) {
-                squareInchesIntersect -= intersect.area;
-            }
+        let intersect = IntersectRect(rectIntersections[i], rectIntersections[j]);
+        if (intersect.area > 0) {
+            squareInchesIntersect -= intersect.area;
         }
 
     }
