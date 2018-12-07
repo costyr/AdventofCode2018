@@ -5,22 +5,27 @@ var rawDay3Input = fs.readFileSync('./Day3TestInput.txt');
 var day3Input = rawDay3Input.toString().split('\r\n');
 
 function IntersectRect(aRect1, aRect2) {
-    if (aRect1.left < aRect2.right && aRect1.right > aRect2.left &&
-        aRect1.top > aRect2.bottom && aRect1.bottom < aRect2.top) {
-        let left = Math.max(aRect1.left, aRect2.left);
-        let right = Math.min(aRect1.right, aRect2.right);
-        let top = Math.max(aRect1.top, aRect2.top);
-        let bottom = Math.min(aRect1.bottom, aRect2.bottom);
-        let xOverlap = Math.max(0, right - left);
-        let yOverlap = Math.max(0, bottom - top) + 1;
-        return { "intersect": true, "area": xOverlap * yOverlap, "rect": { "left": intersectLeft, "right": intersectLeft + xOverlap, "top": intersectTop, "bottom": intersectTop + yOverlap } };
+
+    let left = Math.max(aRect1.left, aRect2.left);
+    let right = Math.min(aRect1.right, aRect2.right);
+    let top = Math.max(aRect1.top, aRect2.top);
+    let bottom = Math.min(aRect1.bottom, aRect2.bottom);
+    let xOverlap = Math.max(0, right - left);
+    let yOverlap = Math.max(0, bottom - top);
+    let minLeft = Math.min(aRect1.left, aRect2.left);
+    let maxRight = Math.max(aRect1.right, aRect2.right);
+    let minTop = Math.min(aRect1.top, aRect2.top);
+    let maxBottom = Math.min(aRect1.bottom, aRect2.bottom);
+
+    if (xOverlap * yOverlap > 0) {
+        return { "intersect": true, "area": (xOverlap + 1) * (yOverlap + 1), "rect": { "left": left, "right": right, "top": top, "bottom": bottom } };
     }
     else
         return { "intersect": false };
 }
 
 function GetRectArea(aRect) {
-    return (aRect.right - aRect.left) * (aRect.bottom - aRect.top);
+    return (aRect.right - aRect.left + 1) * (aRect.bottom - aRect.top + 1);
 }
 
 function RectsAreEqual(aRect1, aRect2) {
@@ -47,28 +52,63 @@ for (i = 0; i < day3Input.length; i++) {
 }
 
 var rectIntersections = [];
+var squareInchesIntersect = 0;
 for (i = 0; i < parsedInput.length; i++)
     for (j = i + 1; j < parsedInput.length; j++) {
         let intersect = IntersectRect(parsedInput[i].rect, parsedInput[j].rect);
-        if (intersect.area > 0) {
-            console.log(intersect.area);
-            rectIntersections.push(intersect.rect);
+        if (intersect.intersect) {
+            squareInchesIntersect += intersect.area;
+            let id = parsedInput[i].id + " " + parsedInput[j].id;
+            //console.log(id + ": " + intersect.area);
+            rectIntersections.push({"id": id,  "rect": intersect.rect});
         }
+        //else
+        //console.log(parsedInput[i].id + " " + parsedInput[j].id + ": Not intersecting!");
     }
 
-var squareInchesIntersect = 0;
+    console.log(squareInchesIntersect);
+
+var foundNew = false;
+while(!foundNew) {
+let pp = [];
 for (i = 0; i < rectIntersections.length; i++) {
-    squareInchesIntersect += GetRectArea(rectIntersections[i]);
     for (j = i + 1; j < rectIntersections.length; j++) {
-        let intersect = IntersectRect(rectIntersections[i], rectIntersections[j]);
-        if (intersect.area > 0) {
-            squareInchesIntersect -= intersect.area;
+        let intersect = IntersectRect(rectIntersections[i].rect, rectIntersections[j].rect);
+        if (intersect.intersect) { 
+            foundNew = true;
+            let found = false;
+            for (k = 0; k < pp.length; k++)
+              if (RectsAreEqual(intersect.rect, pp[k])) 
+              {
+                found = true;
+                break;
+              }
+
+            if (!found) 
+            {
+              pp.push( {"rect": intersect.rect});
+            }
+            else 
+            {
+                //console.log(rectIntersections[i].id + " " + rectIntersections[j].id + ": " + intersect.area);
+                //squareInchesIntersect -= intersect.area;
+            }
         }
+        //else
+        //console.log(rectIntersections[i].id + " " + rectIntersections[j].id + ": Not intersecting!");
 
     }
 }
+  rectIntersections = pp;
+}
 
-console.log(squareInchesIntersect);
+console.log(rectIntersections);
+
+var oo = 0;
+for (i = 0; i < rectIntersections.length; i++)
+  oo += GetRectArea(rectIntersections[i].rect);
+
+console.log(oo);
 
 function PrintFabric(aFabric) {
     for (i = 0; i < aFabric.length; i++)
@@ -76,9 +116,9 @@ function PrintFabric(aFabric) {
 }
 
 //console.log(JSON.stringify(rectIntersections));
-console.log(squareInchesIntersect);
+//console.log(squareInchesIntersect);
 
-var fabricLength = 1000;
+var fabricLength = 8;
 var fabric = [];
 
 for (i = 0; i < fabricLength; i++) {
@@ -96,7 +136,7 @@ for (i = 0; i < parsedInput.length; i++) {
 }
 
 console.log("\n");
-//PrintFabric(fabric);
+PrintFabric(fabric);
 
 var tt = 0;
 for (i = 0; i < fabricLength; i++)
