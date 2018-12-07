@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-var rawDay7Input = fs.readFileSync('./Day7TestInput.txt');
+var rawDay7Input = fs.readFileSync('./Day7Input.txt');
 
 var day7Input = rawDay7Input.toString().split('\r\n');
 
@@ -149,13 +149,47 @@ function GetBestWorker(aWorkers, aCount)
   return index;      
 }
 
-const workerCount = 2;
+function NormalizeWorkers(aWorkers, aCount, aWorkCount)
+{
+  if (aWorkCount >= aCount)
+    return;
+
+  let min = 10000;
+  for (let i = 0; i < aCount; i++)
+    if ((aWorkers[i] !== undefined) && (aWorkers[i].length < min))
+      min = aWorkers[i].length;
+  
+  for (let i = 0; i < aCount; i++) 
+  {
+    if (aWorkers[i] === undefined)
+      aWorkers[i] = [];
+    if (aWorkers[i].length < min) 
+    {
+      let toAdd = min - aWorkers[i].length;
+      for (let j = 0; j < toAdd; j++)
+        aWorkers[i].push('.');
+    }
+  }
+}
+
+function PrintWorkers(aWorkers) 
+{
+  for (let i = 0; i < aWorkers.length; i++)
+  {
+    let line = "";
+    for (let j = 0; j < aWorkers[i].length; j++)
+      line += aWorkers[i][j];
+    console.log(line);
+  }
+}
+
+const workerCount = 5;
 var workers = [];
-for (i = 0; i < pp.length; i++) 
+for (let i = 0; i < pp.length; i++) 
 {
   let max = 0;
   let workerIndex = 0;
-  for (j = 0; j < pp[i].length; j++) 
+  for (let j = 0; j < pp[i].length; j++) 
   {
     let step = pp[i].charCodeAt(j) - 65 + 1
 
@@ -163,25 +197,20 @@ for (i = 0; i < pp.length; i++)
       max = step;
 
     workerIndex = GetBestWorker(workers, workerCount); 
-    for (k = 0; k < step; k++)  
+    for (let k = 0; k < step; k++)  
       workers[workerIndex].push(pp[i][j]);    
   }
 
-  for (l = workerIndex + 1; l < workerCount; l++)
-  {
-    if (workers[l] === undefined)
-      workers[l] = [];
-    for (k = 0; k < max; k++)  
-      workers[l].push('.');
-  }
+  //if (i < pp.length - 1)
+    NormalizeWorkers(workers, workerCount, pp[i].length);
 }
 
-console.log(JSON.stringify(workers));
+PrintWorkers(workers);
 
 var seconds = 0;
-for (i = 0; i < workers.length; i++)
+for (let i = 0; i < workers.length; i++)
   if (workers[i].length > seconds)
     seconds = workers[i].length;
   
-console.log(seconds);
+console.log(seconds + 1);
   
