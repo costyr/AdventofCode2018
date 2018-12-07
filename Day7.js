@@ -130,6 +130,25 @@ console.log(gg);
 console.log(JSON.stringify(pp));
 console.log(result);
 
+function GetBestWorker(aWorkers, aCount) 
+{
+  let minLoad = 100000;  
+  let index = 0;
+  for (let w = 0; w < aCount; w++)
+    if (aWorkers[w] == undefined) 
+    {
+      aWorkers[w] = [];
+      return w;
+    }
+    else
+      if (aWorkers[w].length < minLoad) 
+      {
+        minLoad = aWorkers[w].length;
+        index = w;    
+      }
+  return index;      
+}
+
 const workerCount = 2;
 var workers = [];
 for (i = 0; i < pp.length; i++) 
@@ -143,9 +162,7 @@ for (i = 0; i < pp.length; i++)
     if (step > max)
       max = step;
 
-    workerIndex = j; 
-    if (workers[workerIndex] === undefined)
-      workers[workerIndex] = [];
+    workerIndex = GetBestWorker(workers, workerCount); 
     for (k = 0; k < step; k++)  
       workers[workerIndex].push(pp[i][j]);    
   }
