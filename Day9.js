@@ -174,7 +174,7 @@ class LinkedList {
     let node = this.mHead;
     while (node)
     {
-      aFunction(node, aTotal);
+      aTotal += aFunction(node, aTotal);
       node = node.mNext;
     }
   }
@@ -216,6 +216,8 @@ function VisitMarbleNode(aNode, aTotal, aCurrent)
     aTotal += " (" + aNode.mValue.marble + ") ";
   else 
     aTotal += " " + aNode.mValue.marble + " ";
+
+  return aTotal;
 }
 
 function PrintMarble(aMarble, aCurrent) 
@@ -227,8 +229,8 @@ function PrintMarble(aMarble, aCurrent)
 
 var marble = new LinkedList();
 
-var playerCount = 429;
-var lastMarbleWorth = 70902;
+var playerCount = 9;
+var lastMarbleWorth = 25;
 
 var playerScore = [];
 
@@ -244,6 +246,8 @@ var currentPlayer = 0;
 
 for (let i = 1; i < lastMarbleWorth + 1; i++)
 {
+  console.log(i);
+
   let newMarble = { marble: i };
 
   if (i % 23 == 0)
@@ -273,4 +277,10 @@ for (let i = 1; i < lastMarbleWorth + 1; i++)
   PrintMarble(marble, currentMarble);
 } 
 
+let maxScore = 0;
+for (let i = 0; i < playerScore.length; i++)
+  if (playerScore[i] > maxScore)
+    maxScore = playerScore[i];
+
 console.log(JSON.stringify(playerScore));
+console.log(maxScore);
