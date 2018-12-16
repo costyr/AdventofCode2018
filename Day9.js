@@ -76,6 +76,9 @@ class LinkedList {
       listNode.mPrev = aNode;
     }
 
+    if (aNode == this.mTail)
+      this.mTail = listNode;
+
     this.mSize ++;
 
     return listNode;
@@ -110,10 +113,9 @@ class LinkedList {
     let count = aPosNumber;
     while (count > 0)
     {
+      node = node.mPrev;
       if (node == null)
         node = this.mTail;
-      else
-        node = node.mPrev;
       count --;
     }
     
@@ -220,17 +222,34 @@ function VisitMarbleNode(aNode, aTotal, aCurrent)
   return aTotal;
 }
 
-function PrintMarble(aMarble, aCurrent) 
+function MarbleToString(aValue, aIsCurrent) 
 {
+  let marble = aIsCurrent ? "(" : "";
+  marble += aValue;
+  marble += aIsCurrent ? ")" : "";
+
+  let line = " ";
+  line += marble;
+
+  return line;
+}
+
+function PrintMarble(aFirstMarble, aCurrent) 
+{
+  let node = aFirstMarble;
   let line = "";
-  aMarble.VisitList(VisitMarbleNode.bind(aCurrent), line);
+  while (node)
+  {
+    line += MarbleToString(node.mValue.marble, (node == aCurrent));
+    node = node.mNext;
+  }
   console.log(line);
 }
 
 var marble = new LinkedList();
 
-var playerCount = 9;
-var lastMarbleWorth = 25;
+var playerCount = 429; //429; 9; 
+var lastMarbleWorth = 7090100; // 25; // 70901;
 
 var playerScore = [];
 
@@ -246,23 +265,28 @@ var currentPlayer = 0;
 
 for (let i = 1; i < lastMarbleWorth + 1; i++)
 {
-  console.log(i);
-
   let newMarble = { marble: i };
-
-  if (i % 23 == 0)
-  {
-    playerScore[currentPlayer] += i;
-    
-    let nodeToRemove = marble.GetNodeNthPosBackFromNode(currentMarble, 7);
-
-    playerScore[currentPlayer] += nodeToRemove.mValue.marble;
-    
-    marble.RemoveNode(nodeToRemove);
-  }
 
   if (marble.GetSize() == 1)
     currentMarble = marble.AddTail( newMarble );
+  else if (i % 23 == 0)
+  {
+    let nodeToRemove = marble.GetNodeNthPosBackFromNode(currentMarble, 7);
+
+    //console.log("abcd " + i + " " + JSON.stringify(nodeToRemove.mValue));
+
+    //PrintMarble(firstMarble, currentMarble);
+
+    let bonusMarble = nodeToRemove.mValue.marble;
+
+    playerScore[currentPlayer] += i + bonusMarble;
+
+    currentMarble = nodeToRemove.mNext;
+    if (currentMarble == null)
+      currentMarble = firstMarble;
+
+    marble.RemoveNode(nodeToRemove);
+  }
   else 
   {
     let firstAfter = currentMarble.mNext;
@@ -274,7 +298,8 @@ for (let i = 1; i < lastMarbleWorth + 1; i++)
   if (currentPlayer == playerCount)
     currentPlayer = 0;
 
-  PrintMarble(marble, currentMarble);
+  //PrintMarble(firstMarble, currentMarble);
+  //console.log(JSON.stringify(playerScore));
 } 
 
 let maxScore = 0;
