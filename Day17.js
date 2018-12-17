@@ -125,46 +125,41 @@ function CanFlowDown(aDownSymbol) {
   return (aDownSymbol == '.');
 }
 
-function CanFlowRight(aLeftSymbol, aRightSymbol, aDirection) {
+function CanFlowRight(aRightSymbol) {
   if (aRightSymbol == '.')
     return true;
 
-  if (aRightSymbol == '|') {
-    if (aLeftSymbol == '.')
-      return false;
-
-    if ((aDirection == 0) && (aLeftSymbol == '#'))
-      return false;
-
-    return true;
-  }
-
   return false;
 }
 
-function CanFlowLeft(aLeftSymbol, aRightSymbol, aDirection) {
+function CanFlowLeft(aLeftSymbol) {
   if (aLeftSymbol == '.')
     return true;
 
-  if (aLeftSymbol == '|') {
-    if (aRightSymbol == '.')
-      return false;
-
-    if ((aDirection == 0) && (aRightSymbol == '#'))
-      return false;
-
-    return true;
-  }
-
   return false;
 }
 
+function QueueLeft(aQueue, aLeft, aX, aY) 
+{
+  if (CanFlowLeft(aLeft)) {
+    let x = aX;
+    x--;
+    aQueue.push({ x, y: aY});
+  }
+}
 
+function QueueRight(aQueue, aRight, aX, aY) 
+{
+  if (CanFlowRight(aRight)) {
+    let x = aX;
+    x++;
+    aQueue.push({ x, y: aY});
+  }
+}
 
 function GetWatherNextPos(aWatherPos, aGroundMap, aQueue) {
   let x = aWatherPos.x;
   let y = aWatherPos.y;
-  let d = aWatherPos.d;
 
   let xMap = x - xMin + 1;
 
@@ -173,40 +168,22 @@ function GetWatherNextPos(aWatherPos, aGroundMap, aQueue) {
   let left = aGroundMap[y][xMap - 1];
 
   if (CanFlowDown(down)) {
+    QueueLeft(aQueue, left, x, y);
+    QueueRight(aQueue, right, x, y);
     y++;
-    d = 0;
   }
-  else if (CanFlowRight(left, right, d)) {
-    if (CanFlowLeft(left, right, d)) {
-      let lx = x;
-      lx--;
-      aQueue.push({ x: lx, y, d });
-    }
+  else if (CanFlowRight(right)) {
+    QueueLeft(aQueue, left, x, y);
     x++;
   }
-  else if (CanFlowLeft(left, right, d)) {
-    if (CanFlowRight(left, right, d)) {
-      let rx = x;
-      rx--;
-      aQueue.push({ rx, y, d });
-    }
+  else if (CanFlowLeft(left)) {
+    QueueRight(aQueue, right, x, y);
     x--;
   }
-  else {
-    y--;
-    d = 1;
-  }
-
-  let elem = aQueue.find(function(aValue) {
-    if (aValue.x = x && aValue.y == y)
-      return true;
-    return false;    
-  });
-
-  if (elem !== undefined)
-  {
-    let elemPos = aQueue.indexOf(elem);
-    aQueue.splice(elemPos, 1);
+  else { 
+   let pt = aQueue.pop();
+   x = pt.x;
+   y = pt.y;
   }
 
   return { x, y };
