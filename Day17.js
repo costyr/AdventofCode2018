@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-var rawDay17InputFilePath = './Day17TestInput.txt';
+var rawDay17InputFilePath = './Day17Input.txt';
 
 var rawDay17Input = fs.readFileSync(rawDay17InputFilePath);
 
@@ -121,104 +121,205 @@ var mapFilePath = ComputeMapFilePath(rawDay17InputFilePath);
 console.log(mapFilePath);
 RenderMapToFile(groundMap, mapFilePath);
 
-function CanFlowDown(aDownSymbol) {
-  return (aDownSymbol == '.');
+function CanFlowDown(aGroundMap, aX, aY) {
+  if (aY + 1 > yMax)
+    return false;
+
+  let xMap = aX - xMin + 1;
+  let down = aGroundMap[aY + 1][xMap];
+
+  return (down == '.');
 }
 
-function CanFlowRight(aRightSymbol) {
-  if (aRightSymbol == '.')
-    return true;
+function CanFlowRight(aGroundMap, aX, aY, aTestDown) {
+
+  if (aY + 1 > yMax)
+    return false;
+
+  let xMap = aX - xMin + 1;
+  let right = aGroundMap[aY][xMap + 1];
+
+  if (right == '.') {
+    if (!aTestDown)
+      return true;
+
+    let down = aGroundMap[aY + 1][xMap];
+    if ((down == '#') || (down == '~'))
+      return true;
+  }
 
   return false;
 }
 
-function CanFlowLeft(aLeftSymbol) {
-  if (aLeftSymbol == '.')
-    return true;
+function CanFlowLeft(aGroundMap, aX, aY, aTestDown) {
+  if (aY + 1 > yMax)
+    return false;
+
+  let xMap = aX - xMin + 1;
+  let left = aGroundMap[aY][xMap - 1];
+
+  if (left == '.') {
+    if (!aTestDown)
+      return true;
+
+    let down = aGroundMap[aY + 1][xMap];
+    if ((down == '#') || (down == '~'))
+      return true;
+  }
 
   return false;
 }
 
-function QueueLeft(aQueue, aLeft, aX, aY) 
-{
-  if (CanFlowLeft(aLeft)) {
+function QueueLeft(aQueue, aGroundMap, aX, aY) {
+  if (CanFlowLeft(aGroundMap, aX, aY, false)) {
     let x = aX;
     x--;
-    aQueue.push({ x, y: aY});
+    aQueue.push({ x, y: aY });
   }
 }
 
-function QueueRight(aQueue, aRight, aX, aY) 
-{
-  if (CanFlowRight(aRight)) {
+function QueueRight(aQueue, aGroundMap, aX, aY) {
+  if (CanFlowRight(aGroundMap, aX, aY, false)) {
     let x = aX;
     x++;
-    aQueue.push({ x, y: aY});
+    aQueue.push({ x, y: aY });
   }
+}
+
+function IsValidQueuePos(aWatherPos, aGroundMap) {
+  let xMap = aWatherPos.x - xMin + 1;
+  let current = aGroundMap[aWatherPos.y][xMap];
+  let down = aWatherPos.y < yMax ? aGroundMap[aWatherPos.y + 1][xMap] : '.';
+
+  let leftWaterCount = 0;
+  for (let i = xMap - 1; i > 0; i--)
+    if (aGroundMap[aWatherPos.y][i] == '|')
+      leftWaterCount++;
+    else
+      break;
+
+  let rightWaterCount = 0;
+  for (let i = xMap + 1; i < width; i++)
+    if (aGroundMap[aWatherPos.y][i] == '|')
+      rightWaterCount++;
+    else
+      break;
+
+  let hasGround = (down == '#') || (down == '~');
+  let hasPressure = false;
+
+  if (leftWaterCount > 1)
+    hasPressure = (aGroundMap[aWatherPos.y - 1][xMap - 1] == '|');
+  else if (rightWaterCount > 1)
+    hasPressure = (aGroundMap[aWatherPos.y - 1][xMap + 1] == '|');;
+
+  return (current == '.') && (hasGround || hasPressure);
 }
 
 function GetWatherNextPos(aWatherPos, aGroundMap, aQueue) {
   let x = aWatherPos.x;
   let y = aWatherPos.y;
 
-  let xMap = x - xMin + 1;
-
-  let down = aGroundMap[y + 1][xMap];
-  let right = aGroundMap[y][xMap + 1];
-  let left = aGroundMap[y][xMap - 1];
-
-  if (CanFlowDown(down)) {
-    QueueLeft(aQueue, left, x, y);
-    QueueRight(aQueue, right, x, y);
+  if (CanFlowDown(aGroundMap, x, y)) {
+    QueueLeft(aQueue, aGroundMap, x, y);
+    QueueRight(aQueue, aGroundMap, x, y);
     y++;
   }
-  else if (CanFlowRight(right)) {
-    QueueLeft(aQueue, left, x, y);
+  else if (CanFlowRight(aGroundMap, x, y, true)) {
+    QueueLeft(aQueue, aGroundMap, x, y);
     x++;
   }
-  else if (CanFlowLeft(left)) {
-    QueueRight(aQueue, right, x, y);
+  else if (CanFlowLeft(aGroundMap, x, y, true)) {
+    QueueRight(aGroundMap, aQueue, x, y);
     x--;
   }
-  else { 
-   let pt = aQueue.pop();
-   x = pt.x;
-   y = pt.y;
+  else {
+    StabilizeWater({ x, y }, aGroundMap);
+
+    let queuePos;
+    do {
+      queuePos = aQueue.pop();
+      if (queuePos === undefined)
+        break;
+
+      x = queuePos.x;
+      y = queuePos.y;
+    } while (!IsValidQueuePos(queuePos, aGroundMap));
+
+    if (aQueue.length == 0) {
+      x = -1;
+      y = -1;
+    }
   }
 
   return { x, y };
 }
 
 function StabilizeWater(aWatherPos, aGroundMap) {
+  let y = aWatherPos.y;
+  let x = aWatherPos.x - xMin + 1;
+
+  let clayRightPos = -1;
+  for (let i = x; i < width; i++)
+    if (aGroundMap[y][i] == '#') {
+      clayRightPos = i;
+      break;
+    }
+
+  let clayLeftPos = -1;
+  for (let i = x; i > 0; i--)
+    if (aGroundMap[y][i] == '#') {
+      clayLeftPos = i;
+      break;
+    }
+
+  if ((clayLeftPos == -1) ||
+    (clayRightPos == -1))
+    return false;
+
+  let hasSand = false;
+  for (let i = clayLeftPos + 1; i < clayRightPos; i++)
+    if (aGroundMap[y][i] == '.')
+      hasSand = true;
+
+  if (hasSand)
+    return false;
+
+  for (let i = clayLeftPos + 1; i < clayRightPos; i++)
+    aGroundMap[y][i] = '~';
+
+  return true;
+}
+
+function GetWatherCount(aGroundMap) {
+  let count = 0;
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++)
-      if ((aWatherPos.y < y) && (aGroundMap[y][x - xMin + 1] == '|'))
-        aGroundMap[y][x - xMin + 1] == '~';
+      if ((aGroundMap[y][x] == '~') ||
+        (aGroundMap[y][x] == '|'))
+        count++;
+
+  return count;
 }
 
 function FillWithWater(aWaterStart, aGroundMap) {
-  let count = 100;
   let queue = [];
-  queue.push({ x: aWaterStart.x, y: aWaterStart.y, d: 0 });
-  while (queue.length > 0) {
-    let pos = queue.pop();
-    while (pos.y < yMax && count > 0) {
-      pos = GetWatherNextPos(pos, aGroundMap, queue);
+  let pos = { x: aWaterStart.x, y: aWaterStart.y, d: 0 };
+  do {
+    pos = GetWatherNextPos(pos, aGroundMap, queue);
 
-      let mapX = pos.x - xMin + 1;
-      let mapY = pos.y;
+    if (pos.y == -1)
+      break;
 
-      if (aGroundMap[mapY][mapX] == '|')
-        aGroundMap[mapY][mapX] = '~'
-      else
-        aGroundMap[mapY][mapX] = '|';
+    let mapX = pos.x - xMin + 1;
+    let mapY = pos.y;
+    aGroundMap[mapY][mapX] = '|';
 
-      StabilizeWater(pos, aGroundMap);
+  } while (true);
 
-      console.log(RenderMap(aGroundMap));
-      count--;
-    }
-  }
+  console.log(RenderMap(aGroundMap));
+  console.log(GetWatherCount(aGroundMap));
+  RenderMapToFile(groundMap, mapFilePath);
 }
 
 FillWithWater(waterStart, groundMap);
