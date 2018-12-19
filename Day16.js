@@ -1,301 +1,25 @@
 const fs = require('fs');
+const instruction = require('./Day16Instructions.js');
 
-function RegistersAreEqual(aRegistersBefore, aRegistersAfter) {
-  for (let i = 0; i < aRegistersBefore.length; i++)
-    if (aRegistersBefore[i] != aRegistersAfter[i])
-      return false;
-  return true;
-}
-
-function InstFromArray(aInstruction) {
-  return { op: aInstruction[0], a: aInstruction[1], b: aInstruction[2], c: aInstruction[3] };
-}
-
-class Instruction {
-  constructor(aRegisters) {
-    this.mRegisters = aRegisters;
-  }
-
-  SetRegisters(aRegisters) {
-    for (let i = 0; i < aRegisters.length; i++)
-      this.mRegisters[i] = aRegisters[i];
-  }
-}
-
-class Addr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "addr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] + registers[inst.b];
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Addi extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "addi";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] + inst.b;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Mulr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "mulr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] * registers[inst.b];
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Muli extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "muli";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] * inst.b;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Banr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "banr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] & registers[inst.b];
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Bani extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "bani";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] & inst.b;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Borr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "borr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] | registers[inst.b];
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Bori extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "bori";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] | inst.b;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Setr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "setr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a];
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Seti extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "seti";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = inst.a;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Gtir extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "gtir";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = inst.a > registers[inst.b] ? 1 : 0;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Gtri extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "gtri";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] > inst.b ? 1 : 0;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Gtrr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "gtrr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] > registers[inst.b] ? 1 : 0;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Eqir extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "eqir";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = inst.a == registers[inst.b] ? 1 : 0;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Eqri extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "eqri";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] == inst.b ? 1 : 0;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
-
-class Eqrr extends Instruction {
-  constructor(aRegisters) {
-    super(aRegisters);
-    this.mOpCode = "eqrr";
-  }
-
-  TestInstruction(aInstruction, aRegistersAfter) {
-
-    let inst = InstFromArray(aInstruction);
-    let registers = this.mRegisters;
-    registers[inst.c] = registers[inst.a] == registers[inst.b] ? 1 : 0;
-
-    return RegistersAreEqual(aRegistersAfter, this.mRegisters);
-  }
-}
 
 var registers = [0, 0, 0, 0];
 var instructionSet = [];
-instructionSet.push(new Addr(registers));
-instructionSet.push(new Addi(registers));
-instructionSet.push(new Mulr(registers));
-instructionSet.push(new Muli(registers));
-instructionSet.push(new Banr(registers));
-instructionSet.push(new Bani(registers));
-instructionSet.push(new Borr(registers));
-instructionSet.push(new Bori(registers));
-instructionSet.push(new Setr(registers));
-instructionSet.push(new Seti(registers));
-instructionSet.push(new Gtir(registers));
-instructionSet.push(new Gtri(registers));
-instructionSet.push(new Gtrr(registers));
-instructionSet.push(new Eqir(registers));
-instructionSet.push(new Eqri(registers));
-instructionSet.push(new Eqrr(registers));
+instructionSet.push(new instruction.Addr(registers));
+instructionSet.push(new instruction.Addi(registers));
+instructionSet.push(new instruction.Mulr(registers));
+instructionSet.push(new instruction.Muli(registers));
+instructionSet.push(new instruction.Banr(registers));
+instructionSet.push(new instruction.Bani(registers));
+instructionSet.push(new instruction.Borr(registers));
+instructionSet.push(new instruction.Bori(registers));
+instructionSet.push(new instruction.Setr(registers));
+instructionSet.push(new instruction.Seti(registers));
+instructionSet.push(new instruction.Gtir(registers));
+instructionSet.push(new instruction.Gtri(registers));
+instructionSet.push(new instruction.Gtrr(registers));
+instructionSet.push(new instruction.Eqir(registers));
+instructionSet.push(new instruction.Eqri(registers));
+instructionSet.push(new instruction.Eqrr(registers));
 
 function LoadSamples(aInputFile) {
   let rawInput = fs.readFileSync(aInputFile);
@@ -346,7 +70,7 @@ for (let i = 0; i < samples.length; i++) {
 }
 
 //console.log(samples);
-console.log(opCodes);
+//console.log(opCodes);
 console.log(totalCount);
 
 var opCodeMap = [];
@@ -376,8 +100,8 @@ while (true) {
     }
 }
 
-console.log(opCodeMap);
-console.log(opCodes);
+//console.log(opCodeMap);
+//console.log(opCodes);
 
 var instCodeMap = [];
 for (let i = 0; i < instructionSet.length; i++) {
@@ -390,7 +114,7 @@ function GetInst(aOpCode) {
   return instCodeMap[aOpCode];
 }
 
-console.log(instCodeMap);
+//console.log(instCodeMap);
 
 var testFailed = false;
 for (let i = 0; i < samples.length; i++) {
@@ -403,7 +127,7 @@ for (let i = 0; i < samples.length; i++) {
   }
 }
 
-console.log(testFailed);
+//console.log(testFailed);
 
 for (let i = 0; i < registers.length; i++)
   registers[i] = 0;
@@ -423,7 +147,7 @@ for (let i = 0; i < input2.length; i++)
   for (let j = 0; j < line.length; j++)
     instLine.push(parseInt(line[j]));
   
-  console.log(instLine);
+  //console.log(instLine);
 
   let inst = GetInst(instLine[0]);
  
