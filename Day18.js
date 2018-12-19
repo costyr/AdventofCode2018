@@ -70,18 +70,6 @@ function GetAdjacentsCount(aX, aY, aAcres) {
   return { open, wooded, lumberyard };
 }
 
-/*let ad = GetAdjacents(0, 0, acres);
-
-console.log(ad);
-
-let ad1 = GetAdjacents(0, 1, acres);
-
-console.log(ad1);
-
-let ad2 = GetAdjacents(0, 9, acres);
-
-console.log(ad2);*/
-
 function ComputeWoodResource(aAcres) {
   let woodCount = 0;
   let lumberyardCount = 0;
@@ -94,7 +82,8 @@ function ComputeWoodResource(aAcres) {
   return woodCount * lumberyardCount
 }
 
-var minutesCount = 15800;
+var tenMinutesTarget = 10;
+var minutesCount = 100000;
 var resMap = [];
 for (let m = 0; m < minutesCount; m++) {
   let newAcres = [];
@@ -130,25 +119,55 @@ for (let m = 0; m < minutesCount; m++) {
   }
 
   acres = newAcres;
-  //console.log();
-  //PrintAcres(acres);
-  let resCount = ComputeWoodResource(acres);
-  let key = resCount.toString();
-  if (resMap[key] === undefined)
-    resMap[key] = 0;
-  else 
-    resMap[key] ++;
-}
 
-let s = 0;
-for (let key in resMap)
-  if (resMap[key] !== undefined) 
+  let resCount = ComputeWoodResource(acres);
+
+  if (m == tenMinutesTarget - 1) 
   {
-    if (resMap[key] > 0)
-  console.log(key + " "+ resMap[key]);
-  s++;
+    console.log();
+    PrintAcres(acres);
+    console.log("Resource value after 10 minutes: " + resCount);
   }
 
-console.log("Map size: " + s);
+  let key = resCount;
+  if (resMap[key] === undefined)
+    resMap[key] = { count: 1, startMinute: m, minute: m, freq: [] };
+  else {
+    let elem = resMap[key];
 
-//console.log(JSON.stringify(resMap));
+    let newMinute = m - elem.minute;
+
+    if (elem.freq.indexOf(newMinute) == -1)
+      elem.freq.push(newMinute);
+
+    elem.count++;
+    elem.minute = m;
+
+    resMap[key] = elem;
+  }
+}
+
+let targetMinuteCount = 1000000000;
+
+console.log();
+let mapSize = 0;
+let resourceCountAfterTarget = 0;
+for (let key in resMap)
+  if (resMap[key] !== undefined) {
+    let freq = resMap[key].freq;
+    if ((resMap[key].count >= 100) && (freq.length > 0)) {
+      console.log(key + " " + JSON.stringify(resMap[key]));
+      
+      let rest = (targetMinuteCount - 1) - resMap[key].startMinute;
+      for (let i = 0; i < freq.length; i++)
+      if ((rest % resMap[key].freq[i]) == 0) 
+      {
+        resourceCountAfterTarget = parseInt(key);
+        break;
+      }
+    }
+    mapSize++;
+  }
+console.log("Map size: " + mapSize);
+console.log();
+console.log("Resource value after 1000000000 minutes: " + resourceCountAfterTarget);
