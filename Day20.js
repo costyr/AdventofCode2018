@@ -48,13 +48,22 @@ function MapDirections(aCurrentPos, aDirections, aDirectionsMap) {
     }
     else 
     {
+      let current = { x, y };
+      let detured = false;
       for (let j = 0; j < directions.o.length; j++) 
       {
         let option = directions.o[j];
-        MapDirections({ x, y }, option, aDirectionsMap);
+
+        let isDetoor = (option.o !== undefined) && (option.o.length == 1);
+
+        current = MapDirections(isDetoor | detured ? current : { x, y }, (option.o === undefined) ? option : option.o, aDirectionsMap);
+
+        detured = isDetoor;
       }
     }
   }
+
+  return { x, y };
 }
 
 function ParseDirections(aDirections) {
