@@ -47,22 +47,25 @@ function MapOptDirections(aCurrentPos, aOptDirections, aDirectionsMap) {
   for (let i = 0; i < aOptDirections.o.length; i++) {
     let directions = aOptDirections.o[i];
     if (directions.o === undefined) {
-      current = aCurrentPos;
-      for (let j = 0; j < directions.length; j++) {
-        current = MapDirection(directions[j], current, aDirectionsMap);
+
+      if (directions.d === undefined) 
+      {
+        current = aCurrentPos;
+        for (let j = 0; j < directions.length; j++) {
+          current = MapDirection(directions[j], current, aDirectionsMap);
+        }
       }
-    }
-    else 
-    {
-      if (directions.d === undefined)
-        MapOptDirections(current, directions, aDirectionsMap);
-      else 
+      else
       {
         let detoor = directions.d;
         let detoorCurrent = current;
         for (let j = 0; j < detoor.length; j++) 
           detoorCurrent = MapDirection(detoor[j], detoorCurrent, aDirectionsMap);
       }
+    }
+    else 
+    {
+      MapOptDirections(current, directions, aDirectionsMap);
     }
   }
 }
