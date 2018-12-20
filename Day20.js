@@ -10,6 +10,63 @@ let startPos = { x: 0, y: 0 };
 
 directionsMap.push({ ...startPos, r: 'x' });
 
+function MapDirection(aDirection, aCurrentPos, aDirectionsMap) 
+{
+  let x = aCurrentPos.x;
+  let y = aCurrentPos.y;
+  if (aDirection == 'E') {
+    x++;
+    aDirectionsMap.push({ x: x, y: y, r: '|' });
+    x++;
+    aDirectionsMap.push({ x: x, y: y, r: '.' });
+  }
+  else if (aDirection == 'W') {
+    x--;
+    aDirectionsMap.push({ x: x, y: y, r: '|' });
+    x--;
+    aDirectionsMap.push({ x: x, y: y, r: '.' });
+  }
+  else if (aDirection == 'N') {
+    y++;
+    aDirectionsMap.push({ x: x, y: y, r: '-' });
+    y++;
+    aDirectionsMap.push({ x: x, y: y, r: '.' });
+  }
+  else if (aDirection == 'S') {
+    y--;
+    aDirectionsMap.push({ x: x, y: y, r: '-' });
+    y--;
+    aDirectionsMap.push({ x: x, y: y, r: '.' });
+  }
+
+  return { x, y };
+}
+
+function MapOptDirections(aCurrentPos, aOptDirections, aDirectionsMap) {
+  let current; 
+  for (let i = 0; i < aOptDirections.o.length; i++) {
+    let directions = aOptDirections.o[i];
+    if (directions.o === undefined) {
+      current = aCurrentPos;
+      for (let j = 0; j < directions.length; j++) {
+        current = MapDirection(directions[j], current, aDirectionsMap);
+      }
+    }
+    else 
+    {
+      if (directions.d === undefined)
+        MapOptDirections(current, directions, aDirectionsMap);
+      else 
+      {
+        let detoor = directions.d;
+        let detoorCurrent = current;
+        for (let j = 0; j < detoor.length; j++) 
+          detoorCurrent = MapDirection(detoor[j], detoorCurrent, aDirectionsMap);
+      }
+    }
+  }
+}
+
 function MapDirections(aCurrentPos, aDirections, aDirectionsMap) {
 
   let x = aCurrentPos.x;
@@ -19,47 +76,14 @@ function MapDirections(aCurrentPos, aDirections, aDirectionsMap) {
 
     if (directions.o === undefined) {
       for (let j = 0; j < directions.length; j++) {
-        let direction = directions[j];
-        if (direction == 'E') {
-          x++;
-          directionsMap.push({ x: x, y: y, r: '|' });
-          x++;
-          directionsMap.push({ x: x, y: y, r: '.' });
-        }
-        else if (direction == 'W') {
-          x--;
-          directionsMap.push({ x: x, y: y, r: '|' });
-          x--;
-          directionsMap.push({ x: x, y: y, r: '.' });
-        }
-        else if (direction == 'N') {
-          y++;
-          directionsMap.push({ x: x, y: y, r: '-' });
-          y++;
-          directionsMap.push({ x: x, y: y, r: '.' });
-        }
-        else if (direction == 'S') {
-          y--;
-          directionsMap.push({ x: x, y: y, r: '-' });
-          y--;
-          directionsMap.push({ x: x, y: y, r: '.' });
-        }
+        let newCurrent = MapDirection(directions[j], {x, y}, aDirectionsMap);
+        x = newCurrent.x;
+        y = newCurrent.y;
       }
     }
     else 
     {
-      let current = { x, y };
-      let detured = false;
-      for (let j = 0; j < directions.o.length; j++) 
-      {
-        let option = directions.o[j];
-
-        let isDetoor = (option.o !== undefined) && (option.o.length == 1);
-
-        current = MapDirections(isDetoor | detured ? current : { x, y }, (option.o === undefined) ? option : option.o, aDirectionsMap);
-
-        detured = isDetoor;
-      }
+      MapOptDirections({ x, y}, directions, aDirectionsMap);
     }
   }
 
@@ -97,9 +121,18 @@ function ParseDirections(aDirections) {
         parsedDirections.push({ o: opt });
     }
     else if (current == '|') {
-      var top = stack[stack.length - 1];
-      top.push(chunk);
-      chunk = "";
+      if (aDirections[i + 1] == ')') {
+        stack.pop();
+        var top = stack[stack.length - 1];
+        top.push({ d: chunk});
+        chunk = "";
+        i++;
+      }
+      else {
+        var top = stack[stack.length - 1];
+        top.push(chunk);
+        chunk = "";
+      }
     }
     else if (current == '$') {
 
