@@ -1,62 +1,90 @@
 const fs = require('fs');
+const util = require('./Util.js');
 
-var day20Input = fs.readFileSync('./Day20TestInput2.txt');
+var inputFilePath = './Day20Input.txt';
+var day20Input = fs.readFileSync(inputFilePath);
 
 console.log(day20Input.toString());
 
 let directionsMap = [];
 
-let startPos = { x: 0, y: 0 };
+let startPos = { x: 0, y: 0, c: 0 };
 
 directionsMap.push({ ...startPos, r: 'x' });
+
+function AddDirection(aDirectionsMap, aDirectionEntry) 
+{
+  let found = false;
+  for (let i = 0; i < aDirectionsMap.length; i++)
+    if ((aDirectionsMap[i].x == aDirectionEntry.x) && 
+        (aDirectionsMap[i].y == aDirectionEntry.y) &&
+        (aDirectionsMap[i].r == aDirectionEntry.r)) 
+    {
+      found = true;
+      break;
+    }
+  
+  if (!found)
+    aDirectionsMap.push(aDirectionEntry);
+}
 
 function MapDirection(aDirection, aCurrentPos, aDirectionsMap) 
 {
   let x = aCurrentPos.x;
   let y = aCurrentPos.y;
+  let c = aCurrentPos.c;
   if (aDirection == 'E') {
     x++;
-    aDirectionsMap.push({ x: x, y: y, r: '|' });
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '|' });
     x++;
-    aDirectionsMap.push({ x: x, y: y, r: '.' });
+    c++;
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '.', c: c });
   }
   else if (aDirection == 'W') {
     x--;
-    aDirectionsMap.push({ x: x, y: y, r: '|' });
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '|' });
     x--;
-    aDirectionsMap.push({ x: x, y: y, r: '.' });
+    c++;
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '.', c: c });
   }
   else if (aDirection == 'N') {
     y++;
-    aDirectionsMap.push({ x: x, y: y, r: '-' });
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '-' });
     y++;
-    aDirectionsMap.push({ x: x, y: y, r: '.' });
+    c++;
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '.', c: c });
   }
   else if (aDirection == 'S') {
     y--;
-    aDirectionsMap.push({ x: x, y: y, r: '-' });
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '-' });
     y--;
-    aDirectionsMap.push({ x: x, y: y, r: '.' });
+    c++;
+    AddDirection(aDirectionsMap, { x: x, y: y, r: '.', c });
   }
 
-  return { x, y };
+  return { x, y, c };
 }
 
 function MapOptDirections(aCurrentPos, aOptDirections, aDirectionsMap) {
   let current; 
+  let stack = [];
+  stack.push(aCurrentPos);
   for (let i = 0; i < aOptDirections.o.length; i++) {
     let directions = aOptDirections.o[i];
     if (directions.o === undefined) {
 
       if (directions.d === undefined) 
       {
-        current = aCurrentPos;
+        current = stack[stack.length - 1];
         for (let j = 0; j < directions.length; j++) {
           current = MapDirection(directions[j], current, aDirectionsMap);
         }
+        if (stack.length > 1)
+          stack.pop();
       }
       else
       {
+        stack.push(current);
         let detoor = directions.d;
         let detoorCurrent = current;
         for (let j = 0; j < detoor.length; j++) 
@@ -74,23 +102,25 @@ function MapDirections(aCurrentPos, aDirections, aDirectionsMap) {
 
   let x = aCurrentPos.x;
   let y = aCurrentPos.y;
+  let c = aCurrentPos.c;
   for (let i = 0; i < aDirections.length; i++) {
     let directions = aDirections[i];
 
     if (directions.o === undefined) {
       for (let j = 0; j < directions.length; j++) {
-        let newCurrent = MapDirection(directions[j], {x, y}, aDirectionsMap);
+        let newCurrent = MapDirection(directions[j], {x, y, c}, aDirectionsMap);
         x = newCurrent.x;
         y = newCurrent.y;
+        c = newCurrent.c;
       }
     }
     else 
     {
-      MapOptDirections({ x, y}, directions, aDirectionsMap);
+      MapOptDirections({ x, y, c}, directions, aDirectionsMap);
     }
   }
 
-  return { x, y };
+  return { x, y, c };
 }
 
 function ParseDirections(aDirections) {
@@ -221,3 +251,17 @@ function PrintMap(aAreaMap) {
 var areaMap = CreateAreaMap(directionsMap);
 
 console.log(PrintMap(areaMap));
+fs.writeFileSync(util.ComputeMapFilePath(inputFilePath), PrintMap(areaMap));
+
+var maxDoors = 0;
+var above100DoorsCount  = 0;
+for (let i = 0; i < directionsMap.length; i++) 
+{
+  if ((directionsMap[i].c !== undefined) && (directionsMap[i].c > maxDoors))
+    maxDoors = directionsMap[i].c;
+  if (directionsMap[i].c >= 1000)
+    above100DoorsCount ++;
+}
+
+console.log(maxDoors);
+console.log(above100DoorsCount);

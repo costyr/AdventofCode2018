@@ -7,18 +7,11 @@ var instructionSet = chronal.CreateInstructionSet(registers);
 
 var chronalProgram = new chronal.ChronalProgram(instructionSet, registers);
 
-chronalProgram.Load('./Day19Input.txt');
+chronalProgram.Load('./Day21Input.txt');
 
 chronalProgram.DumpProgram();
 
+//registers[0] = 1024276;
 var dump = chronalProgram.Run();
 
 console.log(registers);
-
-//fs.writeFileSync("./Day19Dump.txt", JSON.stringify(dump));
-
-//registers[0] = 1;
-
-//RunProgram(instructionSet, registers, ipRegister, program);
-
-//console.log(registers[0]);

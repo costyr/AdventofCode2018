@@ -1,4 +1,5 @@
 const fs = require('fs');
+const util = require('./Util.js');
 
 var rawDay17InputFilePath = './Day17Input.txt';
 
@@ -106,17 +107,9 @@ function RenderMapToFile(aGroundMap, aFilePath) {
   fs.writeFileSync(aFilePath, RenderMap(aGroundMap));
 }
 
-function ComputeMapFilePath(aFilePath) {
-  let index = aFilePath.lastIndexOf('.');
-  let mapFilePath = aFilePath.substr(0, index);
-  mapFilePath += "Map.txt";
-
-  return mapFilePath;
-}
-
 console.log(RenderMap(groundMap));
 
-var mapFilePath = ComputeMapFilePath(rawDay17InputFilePath);
+var mapFilePath = util.ComputeMapFilePath(rawDay17InputFilePath);
 
 console.log(mapFilePath);
 RenderMapToFile(groundMap, mapFilePath);
