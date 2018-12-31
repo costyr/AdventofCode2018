@@ -293,7 +293,7 @@ class CaveMap {
   Print(aRoute, aCostMap) {
     let mapAsString = "";
     let routeTerrain = "";
-    //let toolRoute = "";
+    let toolRoute = "";
     for (let y = 0; y < this.mCaveMap.length; y++) {
       let line = "";
       for (let x = 0; x < this.mCaveMap[y].length; x++) {
@@ -303,7 +303,7 @@ class CaveMap {
         if (routeIndex != -1) {
           line += 'x'
           routeTerrain += terrainType;
-          //toolRoute += aRoute[routeIndex].tool.toString();
+          toolRoute += aRoute[routeIndex].tool.toString();
         }
         else
           line += terrainType;
@@ -314,8 +314,8 @@ class CaveMap {
 
     mapAsString += "\r\n";
     mapAsString += routeTerrain;
-    //mapAsString += "\r\n";
-    //mapAsString += toolRoute;
+    mapAsString += "\r\n";
+    mapAsString += toolRoute;
     return mapAsString;
   }
 
@@ -415,7 +415,6 @@ class FastestRoute {
     this.mPriorityList = new PriorityList(this.mCostMap);
     let currentPos = { x: 0, y: 0, tool: torch };
     while (true) {
-      //console.log(RenderMapWithPos(currentPos, aCaveMap));
       this.VisitNeighbors(currentPos);
 
       MarkVisited(currentPos, this.mPriorityList, this.mCostMap);
@@ -438,22 +437,6 @@ class FastestRoute {
   GetNextCurrent() {
     if (!this.mPriorityList.IsEmpty())
       return this.mPriorityList.GetNext();
-
-    let min = Number.MAX_SAFE_INTEGER;
-    let pos;
-    for (let i = 0; i < this.mCostMap.length; i++)
-      for (let j = 0; j < this.mCostMap[i].length; j++) {
-        let nodeCost = this.mCostMap.GetNodeCost({ x: j, y: i });
-
-        if (nodeCost.visited)
-          continue;
-
-        if ((nodeCost.cost != -1) && (nodeCost.cost < min)) {
-          min = nodeCost.cost;
-          pos = { x: j, y: i, tool: nodeCost.tool, cost: nodeCost.cost };
-        }
-      }
-    return pos;
   }
 }
 
