@@ -116,10 +116,13 @@ function GenerateCostMap(aStartPos, aMap) {
       let neighbourPos = { x: currentPos.x + transform.x, y: currentPos.y + transform.y };
 
       let neighbourCost = GetCost(aMap, neighbourPos);
+      let newCost = currentPosCost + 1;
 
-      if (IsAccessibleGround(aMap, neighbourPos) && (neighbourCost == -1)) {
-        SetCost(aMap, neighbourPos, currentPosCost + 1);
-        queue.push(neighbourPos);
+      if (IsAccessibleGround(aMap, neighbourPos)) {
+        if ((neighbourCost == -1) || (newCost < neighbourCost)) {
+          SetCost(aMap, neighbourPos, newCost);
+          queue.push(neighbourPos);
+        }
       }
     }
   }
@@ -139,8 +142,57 @@ function GetUnitNeibourghs(aMap, aUnit) {
   return unitNeibourghs;
 }
 
-function SelectTargets(aUnit, aEnemyUnits) {
-              
+function CompareMapPositions(aPos1, aPos2) {
+  if (aPos1.c < aPos2.c)
+    return -1;
+  else if (aPos1.c > aPos2.c)
+    return 1;
+  else
+  {
+    if (aPos1.y < aPos2.y)
+      return -1;
+    else if (aPos1.y > aPos2.y)
+      return 1;
+    else 
+    {
+      if (aPos1.x < aPos2.x)
+        return -1;
+      else if (aPos1.x > aPos2.x)
+        return 1;
+      else 
+        return 0;
+    }
+  }
+}
+
+function AppendPointIfNotExist(aArray, aPoint) {
+  for (let i = 0; i < aArray.length; i++)
+    if (IsEqual(aPoint, aArray[i]))
+      return;
+  aArray.push(aPoint);
+}
+
+function SelectTargets(aUnit, aEnemyUnits, aMap) {
+
+  let startPos = { x: aUnit.x, y: aUnit.y };
+  ResetCost(aMap);
+  GenerateCostMap(startPos, aMap);
+
+  let targetsNeibourghs = [];
+  for (let j = 0; j < aEnemyUnits.length; j++) {
+    let unitNeibourghs = GetUnitNeibourghs(aMap, aEnemyUnits[j]);
+
+    for (let i = 0; i < unitNeibourghs.length; i++) {
+      let unitNeighbour = unitNeibourghs[i];
+      let cost = GetCost(aMap, unitNeighbour);
+      if (cost > 0)
+        AppendPointIfNotExist(targetsNeibourghs, { ...unitNeighbour, c: cost });
+    }
+  }
+  
+  targetsNeibourghs.sort(CompareMapPositions);
+
+  console.log(targetsNeibourghs[0]);
 }
 
 function IsEnemyReachable(aUnit, aEnemyUnit, aMap) {
@@ -174,3 +226,5 @@ for (let i = 0; i < goblins.length; i++) {
 
   ResetCost(mapWithUnits);
 }
+
+SelectTargets(elfs[0], goblins, mapWithUnits);
