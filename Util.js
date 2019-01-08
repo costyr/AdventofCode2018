@@ -7,6 +7,11 @@ function ComputeMapFilePath(aFilePath) {
   return mapFilePath;
 }
 
+function CopyObject(aObject) {
+  return JSON.parse(JSON.stringify(aObject));
+}
+
 module.exports = {
-  ComputeMapFilePath
+  ComputeMapFilePath,
+  CopyObject
 }
