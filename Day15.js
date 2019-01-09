@@ -24,7 +24,7 @@ function ParseInput(aInputFilePath, aMap, aElfs, aGoblins) {
 
         let elfsOrGoblins = mapSymbol == 'E' ? aElfs : aGoblins;
 
-        elfsOrGoblins.push({ type: mapSymbol, x: j, y: i });
+        elfsOrGoblins.push({ type: mapSymbol, x: j, y: i, hitpoints: 200, attack: 3 });
         aMap[i][j].g = '.';
       }
     }
@@ -193,6 +193,17 @@ function SelectTargets(aUnit, aEnemyUnits, aMap) {
   targetsNeibourghs.sort(CompareMapPositions);
 
   console.log(targetsNeibourghs[0]);
+
+  startPos = { x: targetsNeibourghs[0].x, y: targetsNeibourghs[0].y };
+
+  ResetCost(aMap);
+  GenerateCostMap(startPos, aMap);
+
+  let movePos = GetUnitNeibourghs(aMap, aUnit);
+
+  movePos.sort(CompareMapPositions);
+
+  console.log(movePos[0]);
 }
 
 function IsEnemyReachable(aUnit, aEnemyUnit, aMap) {
