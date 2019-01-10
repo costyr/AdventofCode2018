@@ -1,8 +1,8 @@
 const fs = require('fs');
-const util= require('./Util.js');
+const util = require('./Util.js');
 
-const kInputFilePath = './Day15TestInput3.txt';
-const kNeibourghsTransform = [ { x: -1, y: 0}, { x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1} ];
+const kInputFilePath = './Day15Input.txt';
+const kNeibourghsTransform = [{ x: -1, y: 0 }, { x: 0, y: -1 }, { x: 1, y: 0 }, { x: 0, y: 1 }];
 
 function ParseInput(aInputFilePath, aMap, aElfs, aGoblins) {
 
@@ -14,7 +14,7 @@ function ParseInput(aInputFilePath, aMap, aElfs, aGoblins) {
     if (aMap[i] === undefined)
       aMap[i] = [];
 
-    aMap[i] = dayInput[i].split('').map(function(aValue) {
+    aMap[i] = dayInput[i].split('').map(function (aValue) {
       return { g: aValue, c: -1 };
     });
 
@@ -45,14 +45,20 @@ function PrintMap(aMap) {
   return rawMap;
 }
 
+function IsPointEqual(aPos1, aPos2) {
+  return (aPos1.x == aPos2.x) && (aPos1.y == aPos2.y);
+}
+
 function IsEqual(aUnit1, aUnit2) {
-  return (aUnit1.x == aUnit2.x) && (aUnit1.y == aUnit2.y) && (aUnit1.type == aUnit2.type);
+  return IsPointEqual(aUnit1, aUnit2) && (aUnit1.type == aUnit2.type);
 }
 
 function PutUnitsOnMap(aMap, aUnits, aExcludeUnit) {
-  for (let i = 0; i < aUnits.length; i++)
-  {
+  for (let i = 0; i < aUnits.length; i++) {
     let unit = aUnits[i];
+
+    if (unit.hitpoints <= 0)
+      continue;
 
     if ((aExcludeUnit !== undefined) && IsEqual(unit, aExcludeUnit))
       continue;
@@ -95,8 +101,8 @@ function GetGround(aMap, aPos) {
 }
 
 function IsAccessibleGround(aMap, aPos) {
-  if ((aPos.x >= 0) && (aPos.x < aMap[0].length) && 
-      (aPos.y >= 0) && (aPos.y < aMap.length))
+  if ((aPos.x >= 0) && (aPos.x < aMap[0].length) &&
+    (aPos.y >= 0) && (aPos.y < aMap.length))
     return GetGround(aMap, aPos) == '.';
   return false;
 }
@@ -105,13 +111,11 @@ function GenerateCostMap(aStartPos, aMap) {
   let queue = [];
   queue.push(aStartPos);
   SetCost(aMap, aStartPos, 0);
-  while (queue.length > 0)
-  {
+  while (queue.length > 0) {
     let currentPos = queue.pop();
     let currentPosCost = GetCost(aMap, currentPos);
 
-    for (let i = 0; i < kNeibourghsTransform.length; i++)
-    {
+    for (let i = 0; i < kNeibourghsTransform.length; i++) {
       let transform = kNeibourghsTransform[i];
       let neighbourPos = { x: currentPos.x + transform.x, y: currentPos.y + transform.y };
 
@@ -128,41 +132,60 @@ function GenerateCostMap(aStartPos, aMap) {
   }
 }
 
-function GetUnitNeibourghs(aMap, aUnit) {
+function GetUnitNeibourghs(aMap, aUnit, aForAttack) {
 
   let unitNeibourghs = [];
   for (let i = 0; i < kNeibourghsTransform.length; i++) {
     let transform = kNeibourghsTransform[i];
     let neighbourPos = { x: aUnit.x + transform.x, y: aUnit.y + transform.y };
 
-    if (GetGround(aMap, neighbourPos) == '.')
-      unitNeibourghs.push(neighbourPos);
+    let groundAtPos = GetGround(aMap, neighbourPos);
+
+    if ((aForAttack != undefined) && aForAttack) {
+      if (groundAtPos != '#')
+        unitNeibourghs.push(neighbourPos);
+    }
+    else
+    {
+      if (groundAtPos == '.')
+        unitNeibourghs.push(neighbourPos);
+    }
   }
-  
+
   return unitNeibourghs;
 }
 
 function CompareMapPositions(aPos1, aPos2) {
+  if (aPos1.y < aPos2.y)
+    return -1;
+  else if (aPos1.y > aPos2.y)
+    return 1;
+  else {
+    if (aPos1.x < aPos2.x)
+      return -1;
+    else if (aPos1.x > aPos2.x)
+      return 1;
+    else
+      return 0;
+  }
+}
+
+function CompareCostAndMapPositions(aPos1, aPos2) {
   if (aPos1.c < aPos2.c)
     return -1;
   else if (aPos1.c > aPos2.c)
     return 1;
   else
-  {
-    if (aPos1.y < aPos2.y)
-      return -1;
-    else if (aPos1.y > aPos2.y)
-      return 1;
-    else 
-    {
-      if (aPos1.x < aPos2.x)
-        return -1;
-      else if (aPos1.x > aPos2.x)
-        return 1;
-      else 
-        return 0;
-    }
-  }
+    return CompareMapPositions(aPos1, aPos2);
+}
+
+function CompareHitPointsAndMapPositions(aUnit1, aUnit2) {
+  if (aUnit1.hitpoints < aUnit2.hitpoints)
+    return -1;
+  else if (aUnit1.hitpoints > aUnit2.hitpoints)
+    return 1;
+  else
+    return CompareMapPositions(aUnit1, aUnit2);
 }
 
 function AppendPointIfNotExist(aArray, aPoint) {
@@ -172,7 +195,53 @@ function AppendPointIfNotExist(aArray, aPoint) {
   aArray.push(aPoint);
 }
 
-function SelectTargets(aUnit, aEnemyUnits, aMap) {
+function GetUnitAtPosition(aPos, aUnits) {
+  for (let i = 0; i < aUnits.length; i++)
+    if (IsPointEqual(aPos, aUnits[i]))
+      return aUnits[i];
+  return null;
+}
+
+function AttackEnemy(aUnit, aEnemyUnits, aMap) {
+  let movePositions = GetUnitNeibourghs(aMap, aUnit, true);
+
+  let targetsInRange = [];
+  for (let i = 0; i < movePositions.length; i++)
+  {
+    let enemy = GetUnitAtPosition(movePositions[i], aEnemyUnits);
+
+    if ((enemy != null) && (enemy.hitpoints > 0))
+      targetsInRange.push(enemy);
+  }
+
+  if (targetsInRange.length > 0)
+  {
+    targetsInRange.sort(CompareHitPointsAndMapPositions);
+    let enemyTarget = targetsInRange[0];
+
+    enemyTarget.hitpoints -= aUnit.attack;
+
+    return true;
+  }
+  
+  return false;
+}
+
+function AddCostToMovePositions(aMovePositions, aMap) {
+  
+  let movePositionsWithCost = [];
+  for (let i = 0; i < aMovePositions.length; i++)
+  {
+    let movePosition = aMovePositions[i];
+    let cost = GetCost(aMap, movePosition);
+
+    movePositionsWithCost.push({ ...movePosition, c: cost });
+  }
+
+  return movePositionsWithCost;
+}
+
+function MoveUnit(aUnit, aEnemyUnits, aMap) {
 
   let startPos = { x: aUnit.x, y: aUnit.y };
   ResetCost(aMap);
@@ -180,6 +249,10 @@ function SelectTargets(aUnit, aEnemyUnits, aMap) {
 
   let targetsNeibourghs = [];
   for (let j = 0; j < aEnemyUnits.length; j++) {
+
+    if (aEnemyUnits[j].hitpoints <= 0)
+      continue;
+
     let unitNeibourghs = GetUnitNeibourghs(aMap, aEnemyUnits[j]);
 
     for (let i = 0; i < unitNeibourghs.length; i++) {
@@ -189,34 +262,117 @@ function SelectTargets(aUnit, aEnemyUnits, aMap) {
         AppendPointIfNotExist(targetsNeibourghs, { ...unitNeighbour, c: cost });
     }
   }
-  
-  targetsNeibourghs.sort(CompareMapPositions);
 
-  console.log(targetsNeibourghs[0]);
+  if (targetsNeibourghs.length == 0)
+    return false;
+
+  targetsNeibourghs.sort(CompareCostAndMapPositions);
 
   startPos = { x: targetsNeibourghs[0].x, y: targetsNeibourghs[0].y };
 
   ResetCost(aMap);
+  aMap[aUnit.y][aUnit.x].g = '.';
   GenerateCostMap(startPos, aMap);
+  aMap[aUnit.y][aUnit.x].g = aUnit.type;
 
-  let movePos = GetUnitNeibourghs(aMap, aUnit);
+  let movePositions = GetUnitNeibourghs(aMap, aUnit);
 
-  movePos.sort(CompareMapPositions);
+  let movePositionsWithCost = AddCostToMovePositions(movePositions, aMap);
 
-  console.log(movePos[0]);
+  movePositionsWithCost.sort(CompareCostAndMapPositions);
+
+  aUnit.x = movePositionsWithCost[0].x;
+  aUnit.y = movePositionsWithCost[0].y;
+
+  return true;
 }
 
-function IsEnemyReachable(aUnit, aEnemyUnit, aMap) {
-  let startPos = { x: aUnit.x, y: aUnit.y };
-  GenerateCostMap(startPos, aMap);
-  let unitNeibourghs = GetUnitNeibourghs(aMap, aEnemyUnit);
+function CountRemaining(aUnitsGroup) {
+  let remaningHitPoints = 0;
+  let remaningUnits = 0;
+  for (let i = 0; i < aUnitsGroup.length; i++)
+    if (aUnitsGroup[i].hitpoints > 0) {
+      remaningHitPoints += aUnitsGroup[i].hitpoints;
+      remaningUnits ++;
+    }
+  
+  return { remaningHitPoints, remaningUnits, unitsLost: aUnitsGroup.length - remaningUnits };
+}
 
-  for (let i = 0; i < unitNeibourghs.length; i++) {
-    if (GetCost(aMap, unitNeibourghs[i]) > 0)
-      return true; 
+function BoostAttackPower(aUnitsGroup,  aAttackBoost) {
+  for (let i = 0; i < aUnitsGroup.length; i++)
+    aUnitsGroup[i].attack += aAttackBoost;
+}
+
+function RunBattle(aElfs, aElfAttackBoost, aGoblins, aMap, aLogBattle) {
+  
+  let elfs = util.CopyObject(aElfs);
+
+  if (aElfAttackBoost > 0)
+    BoostAttackPower(elfs, aElfAttackBoost);
+
+  let goblins = util.CopyObject(aGoblins);
+  
+  let units = elfs.concat(goblins);
+
+  let rounds = 0;
+  while (true) {
+    units.sort(CompareMapPositions);
+     
+    for (let i = 0; i < units.length; i++)
+    {
+      let unit = units[i];
+
+      if (unit.hitpoints <= 0)
+        continue;
+
+      let enemyUnits = (unit.type == 'E') ? goblins : elfs;
+
+      let mapWithUnits = GetMapWithUnits(aMap, elfs, goblins);
+
+      let ret = AttackEnemy(unit, enemyUnits, mapWithUnits);
+      if (!ret) {
+        ret = MoveUnit(unit, enemyUnits, mapWithUnits);
+        if (ret)
+          ret = AttackEnemy(unit, enemyUnits, mapWithUnits);
+      }
+
+      if (!ret) {
+        let elfStats = CountRemaining(elfs);
+        let goblinStats = CountRemaining(goblins);
+    
+        if ((elfStats.remaningHitPoints == 0) || (goblinStats.remaningHitPoints == 0))
+        {
+          let winnerStats = (elfStats.remaningHitPoints > 0) ? elfStats : goblinStats;
+          let winner = (elfStats.remaningHitPoints > 0) ? 'elf' : 'goblin';
+          return { winner: winner, score: rounds * winnerStats.remaningHitPoints, unitsLost: winnerStats.unitsLost };   
+        }
+      }
+    }
+
+    rounds ++;
+
+    if (aLogBattle) {
+      console.log(rounds);
+      console.log(PrintMapWithUnits(aMap, elfs, goblins));
+      console.log(elfs);
+      console.log(goblins);
+    }
   }
+}
 
-  return false;
+function FindMinElfBoost(aElfs, aGoblins, aMap, aLogBattle) {
+  let attackBoost = 1;
+  while(true) {
+    let ret = RunBattle(aElfs, attackBoost, aGoblins, aMap, aLogBattle);
+    if ((ret.winner == 'elf') && (ret.unitsLost == 0))
+      return ret;
+    
+    if (aLogBattle)
+      console.log("Elf attack boost: " + attackBoost + " " + JSON.stringify(ret));
+
+    attackBoost ++;
+  }  
 }
 
 var cavesMap = [];
@@ -229,13 +385,10 @@ console.log(elfs);
 console.log(goblins);
 console.log(PrintMapWithUnits(cavesMap, elfs, goblins));
 
-let mapWithUnits = GetMapWithUnits(cavesMap, elfs, goblins);
-for (let i = 0; i < goblins.length; i++) {
-  let isReachable = IsEnemyReachable(elfs[0], goblins[i], mapWithUnits);
+let ret = RunBattle(elfs, 0, goblins, cavesMap, true);
 
-  console.log("Goblin " + i + " is reachable: " + isReachable);
+console.log(ret);
 
-  ResetCost(mapWithUnits);
-}
+ret = FindMinElfBoost(elfs, goblins, cavesMap, false);
 
-SelectTargets(elfs[0], goblins, mapWithUnits);
+console.log(ret);
