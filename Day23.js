@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const kInputFilePath = './Day23TestInput2.txt';
+const kInputFilePath = './Day23Input.txt';
 
 function ParseInput(aInputFilePath, aNanoBots) {
 
@@ -88,7 +88,7 @@ function FindMaxCube(aNanoBots) {
 }
 
 function ComputeHalf(aStart, aEnd) {
-  return Math.round((Math.abs(aEnd) - Math.abs(aStart)) / 2);
+  return aStart + Math.round((Math.abs(aEnd) - Math.abs(aStart)) / 2);
 }
 
 function SplitCube(aMinMax, aMinMaxArray) {
