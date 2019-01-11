@@ -1,160 +1,201 @@
 const fs = require('fs');
 
-var rawInputFilePath = './Day23Input.txt';
+const kInputFilePath = './Day23TestInput2.txt';
 
-var rawInput = fs.readFileSync(rawInputFilePath);
+function ParseInput(aInputFilePath, aNanoBots) {
 
-var dayInput = rawInput.toString().split('\r\n');
+  let rawInput = fs.readFileSync(aInputFilePath);
 
-var parsedInput = [];
+  let dayInput = rawInput.toString().split('\r\n');
 
-for (let i = 0; i < dayInput.length; i++) {
-  let line = dayInput[i].split('>, r=');
-  let rawPos = line[0].split('=<')[1].split(',');
-  let x = parseInt(rawPos[0]);
-  let y = parseInt(rawPos[1]);
-  let z = parseInt(rawPos[2]);
-  let r = parseInt(line[1]);
+  for (let i = 0; i < dayInput.length; i++) {
+    let line = dayInput[i].split('>, r=');
+    let rawPos = line[0].split('=<')[1].split(',');
+    let x = parseInt(rawPos[0]);
+    let y = parseInt(rawPos[1]);
+    let z = parseInt(rawPos[2]);
+    let r = parseInt(line[1]);
 
-  parsedInput.push({ x, y, z, r });
+    aNanoBots.push({ x, y, z, r });
+  }
 }
 
-console.log(parsedInput);
+function ComputeManhattanDistance(aPoint1, aPoint2) {
+  return Math.abs(aPoint1.x - aPoint2.x) + Math.abs(aPoint1.y - aPoint2.y) + Math.abs(aPoint1.z - aPoint2.z);
+}
 
-let nanoBotPos;
-let max = 0;
-let bb = 0;
-for (let i = 0; i < parsedInput.length; i++) {
-  let pt1 = parsedInput[i];
-  let r = parsedInput[i].r;
-  let count = 0;
-  let dist = 0;
-  let maxDist = 0;
-  for (let j = 0; j < parsedInput.length; j++) {
-    let pt2 = parsedInput[j];
-    dist = Math.abs(pt1.x - pt2.x) + Math.abs(pt1.y - pt2.y) + Math.abs(pt1.z - pt2.z);
+function FindLargestSignalNanoBot(aNanoBots) {
 
-    if (dist <= r) 
-    {
-      count++;
-      if (dist > maxDist)
-        maxDist = dist;
+  let max = 0;
+  for (let i = 0; i < aNanoBots.length; i++) {
+    let nanoBot1 = aNanoBots[i];
+    let count = 0;
+    for (let j = 0; j < aNanoBots.length; j++) {
+      let nanoBot2 = aNanoBots[j];
+      let dist = ComputeManhattanDistance(nanoBot1, nanoBot2);
+
+      if (dist <= nanoBot1.r)
+        count++;
     }
+
+    if (count > max)
+      max = count;
   }
 
-  if (count > max) {
-    nanoBotPos = i;
-    max = count;
-    bb = maxDist;
-    console.log(max + " " + i + " " + JSON.stringify(parsedInput[i]) + " " + maxDist);
-  } 
+  return max - 1;
 }
 
-function AddPt(aArray, aValue) 
-{
-  let found = false;
-  for (let i = 0; i < aArray.length; i++)
-    if (aValue == aArray[i]) 
-    {
-      found = true
-      break;
-    }
-  if (!found)
-    aArray.push(aValue);
-}
-
-function GetRandomStep() 
-{
-  let seed = Math.floor((Math.random() * 100000) + 1) 
+function GetRandomStep() {
+  let seed = Math.floor((Math.random() * 10000) + 1)
   return Math.floor((Math.random() * seed) + 1);
 }
 
-console.log(parsedInput[nanoBotPos]);
-console.log(parsedInput[nanoBotPos].r);
-console.log(max - 1);
-console.log(bb);
+function UpdateMin(aMin, aCoordValue, aRadius) {
+  let min = Math.min(aCoordValue - aRadius, aMin);
 
-let b = parsedInput[nanoBotPos];
+  return min;
+}
 
-let rr = parsedInput[nanoBotPos].r / 2;
+function UpdateMax(aMax, aCoordValue, aRadius) {
+  let max = Math.max(aCoordValue + aRadius, aMax);
 
-let maxX = b.x + rr;
-let minX = b.x;
-let maxY = b.y + rr;
-let minY = b.y;
-let maxZ = b.z + rr;
-let minZ = b.z;
+  return max;
+}
 
-/*let xPts = [];
-let yPts = [];
-let zPts = [];
-for (let i = 0; i < parsedInput.length; i++) {
-  let pt = parsedInput[i];
+function FindMaxCube(aNanoBots) {
 
-  AddPt(xPts, pt.x);
-  AddPt(yPts, pt.y);
-  AddPt(zPts, pt.z);
+  let minX = Number.MAX_SAFE_INTEGER;
+  let maxX = 0;
 
-  if (pt.x > maxX)
-    maxX = pt.x
-  if (pt.x < minX)
-    minX = pt.x;
-  if (pt.y > maxY)
-    maxY = pt.y;
-  if (pt.y < minY)
-    minY = pt.y;
-  if (pt.z > maxZ)
-    maxZ = pt.z;
-  if (pt.z < minZ)
-    minZ = pt.z;
-}*/
+  let minY = Number.MAX_SAFE_INTEGER;
+  let maxY = 0;
 
-console.log(minX + "..." + maxX);
-console.log(minY + "..." + maxY);
-console.log(minZ + "..." + maxZ);
-/*
-console.log(xPts.length);
-console.log(yPts.length);
-console.log(zPts.length);
+  let minZ = Number.MAX_SAFE_INTEGER;
+  let maxZ = 0;
 
-xPts.sort();
-yPts.sort();
-zPts.sort();*/
+  for (let i = 0; i < aNanoBots.length; i++) {
+    let nanoBot = aNanoBots[i];
 
-let maxInRange = 0;
-let ptWithMaxInRange;
-let minDist = Number.MAX_SAFE_INTEGER;
-//minX = 26336981;
-//maxX = minX + 10000;
+    minX = UpdateMin(minX, nanoBot.x, nanoBot.r);
+    maxX = UpdateMax(maxX, nanoBot.x, nanoBot.r);
+    minY = UpdateMin(minY, nanoBot.y, nanoBot.r);
+    maxY = UpdateMax(maxY, nanoBot.y, nanoBot.r);
+    minZ = UpdateMin(minZ, nanoBot.z, nanoBot.r);
+    maxZ = UpdateMax(maxZ, nanoBot.z, nanoBot.r);
+  }
 
-//minZ = 30949237;
-//maxZ = minZ + 10000;
-//z = minZ;
-//x = 26336380;
-//y = 31209117;
-//minY = 31209117;
-//maxY = minY + 2000;
-//for (let x = minX; x < maxX; x += Math.floor((Math.random() * 1000000) + 1))
-for (let y = minY; y < maxY; y += GetRandomStep()) 
- for (let z = minZ; z < maxZ; z += GetRandomStep())
-  for (let x = minX; x < maxX; x += GetRandomStep()) { 
-      //console.log(x + " " + y + " " + z);
-      let count = 0;
-      let pt1 = {x: x, y: y, z: z };
-      for (let j = 0; j < parsedInput.length; j++) {
-        let pt = parsedInput[j];
-        let dist = Math.abs(pt.x - pt1.x) + Math.abs(pt.y - pt1.y) + Math.abs(pt.z - pt1.z);
+  return { minX, maxX, minY, maxY, minZ, maxZ };
+}
 
-        if (dist <= pt.r)
-          count++;
+function ComputeHalf(aStart, aEnd) {
+  return Math.round((Math.abs(aEnd) - Math.abs(aStart)) / 2);
+}
+
+function SplitCube(aMinMax, aMinMaxArray) {
+  let halfX = ComputeHalf(aMinMax.minX, aMinMax.maxX);
+  let halfY = ComputeHalf(aMinMax.minY, aMinMax.maxY);
+  let halfZ = ComputeHalf(aMinMax.minZ, aMinMax.maxZ);
+
+  console.log( halfX + " " + halfY + " " + halfZ);
+
+  let x = [{ minX: aMinMax.minX, maxX: halfX }, { minX: halfX, maxX: aMinMax.maxX }];
+  let y = [{ minY: aMinMax.minY, maxY: halfY }, { minY: halfY, maxY: aMinMax.maxY }];
+  let z = [{ minZ: aMinMax.minZ, maxZ: halfZ }, { minZ: halfZ, maxZ: aMinMax.maxZ }];
+
+  for (let i = 0; i < x.length; i++)
+    for (let j = 0; j < y.length; j++)
+      for (let k = 0; k < z.length; k++)
+        aMinMaxArray.push({ ...x[i], ...y[j], ...z[k] });
+}
+
+function IsInRange(aMinMax, aNanoBot) {
+  let minX = aNanoBot.x;// - aNanoBot.r;
+  let maxX = aNanoBot.x;// + aNanoBot.r;
+  let minY = aNanoBot.y;// - aNanoBot.r;
+  let maxY = aNanoBot.y;// + aNanoBot.r;
+  let minZ = aNanoBot.z;// - aNanoBot.r;
+  let maxZ = aNanoBot.z;// + aNanoBot.r;
+
+  if ((minX >= aMinMax.minX) && (maxX <= aMinMax.maxX) &&
+      (minY >= aMinMax.minY) && (maxY <= aMinMax.maxY) &&
+      (minZ >= aMinMax.minZ) && (maxZ <= aMinMax.maxZ))
+    return true;
+  return false;
+}
+
+function CountNanoBotsInCube(aMinMax, aNanoBots) {
+  let count = 0;
+  for (let i = 0; i < aNanoBots.length; i++) {
+    if (IsInRange(aMinMax, aNanoBots[i]))
+      count++;
+  }
+
+  return count;
+}
+
+function IsSize(aMinMax, aSize) {
+  let sizeX = Math.abs(aMinMax.maxX - aMinMax.minX);
+  let sizeY = Math.abs(aMinMax.maxY - aMinMax.minY);
+  let sizeZ = Math.abs(aMinMax.maxZ - aMinMax.minZ);
+
+  //console.log( sizeX + " " + sizeY + " " + sizeZ);
+
+  if ((sizeX < aSize) && (sizeY < aSize) && (sizeZ < aSize))
+    return true;
+  
+  return false;
+}
+
+function FindMaxSignalCoord(aMinMax, aNanoBots) {
+  let minMax = aMinMax;
+
+  while (true) {
+
+    console.log();
+
+    let octree = [];
+    SplitCube(minMax, octree);
+
+    let max = 0;
+    let maxIndex = 0;
+    for (let i = 0; i < octree.length; i++) {
+      let count = CountNanoBotsInCube(octree[i], aNanoBots);
+      console.log(count + " " + JSON.stringify(octree[i]));
+
+      if (count > max) {
+        max = count;
+        maxIndex = i;
       }
 
-      if (count >= maxInRange) {
-        ptWithMaxInRange = { x: pt1.x, y: pt1.y, z: pt1.z };
-        minDist = Math.abs(pt1.x) + Math.abs(pt1.y) + Math.abs(pt1.z);
-        maxInRange = count;
-        console.log(JSON.stringify(ptWithMaxInRange) + ": " + maxInRange + " " + minDist);
-      }
+      //console.log(count);
     }
 
-console.log(ptWithMaxInRange);
+    if (max == 0)
+      break;
+
+    minMax = octree[maxIndex];
+
+    //console.log(minMax);
+
+    if (IsSize(minMax, 2))
+      return minMax;
+  }
+}
+
+var nanoBots = [];
+
+ParseInput(kInputFilePath, nanoBots);
+
+console.log(nanoBots);
+
+let maxNanoBots = FindLargestSignalNanoBot(nanoBots);
+
+console.log(maxNanoBots);
+
+let minMax = FindMaxCube(nanoBots);
+
+console.log(minMax);
+
+let ret = FindMaxSignalCoord(minMax, nanoBots);
+
+console.log(ret);
