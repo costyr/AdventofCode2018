@@ -2,6 +2,21 @@ const fs = require('fs');
 
 const kInputFilePath = './Day23Input.txt';
 
+const kSearchDirections = [ { xD: -1, yD: -1, zD: -1 }, 
+                            { xD: -1, yD: -1, zD:  1 }, 
+                            { xD: -1, yD:  1, zD:  1 },
+                            { xD:  1, yD:  1, zD:  1 },
+                            { xD:  1, yD:  1, zD: -1 },
+                            { xD:  1, yD: -1, zD: -1 },
+                            { xD:  1, yD: -1, zD:  1 },
+                            { xD: -1, yD:  1, zD: -1 },
+                            { xD:  0, yD:  0, zD:  1 },
+                            { xD:  0, yD:  1, zD:  0 },
+                            { xD:  1, yD:  0, zD:  0 },
+                            { xD:  1, yD:  1, zD:  0 },
+                            { xD:  0, yD:  1, zD:  1 },
+                            { xD:  1, yD:  0, zD:  1 }, ];
+
 function ParseInput(aInputFilePath, aNanoBots) {
 
   let rawInput = fs.readFileSync(aInputFilePath);
@@ -182,6 +197,115 @@ function FindMaxSignalCoord(aMinMax, aNanoBots) {
   }
 }
 
+function ComputeBotCount(aPoint, aNanoBots) {
+  let count = 0;
+  for (let i = 0; i < aNanoBots.length; i++) {
+    let nanoBot = aNanoBots[i];
+    let dist = ComputeManhattanDistance(nanoBot, aPoint);
+
+    if (dist <= nanoBot.r)
+      count++;
+  }
+
+  return count;
+}
+
+function ComputeMinMax(aPoint, aStepX, aStepY, aStepZ) {
+    let minX = aPoint.x - aStepX;
+    let maxX = aPoint.x + aStepX;
+
+    let minY = aPoint.y - aStepY;
+    let maxY = aPoint.y + aStepY;
+
+    let minZ = aPoint.z - aStepZ;
+    let maxZ = aPoint.z + aStepZ;
+
+    return { minX, maxX, minY, maxY, minZ, maxZ };
+}
+
+function GetQueueMax(aQueue) {
+  if (aQueue.length > 0)
+    return aQueue[0].botCount;
+  return 0;
+}
+
+function CompareQueueEntry(aEntry1, aEntry2) {
+  if (aEntry1.botCount < aEntry2.botCount)
+    return 1;
+  else if (aEntry1.botCount > aEntry2.botCount) 
+    return -1;
+  else
+    return 0;
+}  
+
+function RangeSearch(aMinMax, aNanoBots, aQueue) {
+  let xStep = Math.round((aMinMax.maxX - aMinMax.minX) / 10);
+  let yStep = Math.round((aMinMax.maxY - aMinMax.minY) / 10);
+  let zStep = Math.round((aMinMax.maxZ - aMinMax.minZ) / 10);
+
+  console.log(xStep + " " + yStep + " " + zStep);
+
+  let bestPoint;
+  for (let x = aMinMax.minX; x < aMinMax.maxX; x += xStep)
+    for (let y = aMinMax.minY; y < aMinMax.maxX; y += yStep)
+      for (let z = aMinMax.minZ; z < aMinMax.maxZ; z += zStep) {
+
+        let point = { x, y, z};
+        //console.log(point);
+
+        let count = ComputeBotCount(point, aNanoBots);
+        let max = GetQueueMax(aQueue);
+
+        if ( count > max)
+        {
+          max = count;
+          bestPoint = point;
+          console.log(max);
+
+          let minMax = ComputeMinMax(bestPoint, xStep, yStep, zStep);
+
+          aQueue.push({ botCount: max, point: bestPoint, minMax });
+          aQueue.sort(CompareQueueEntry);
+        }
+      }
+  
+  /*if (max > 0) {
+    console.log(max + " " + JSON.stringify(bestPoint));
+
+    let minMax = ComputeMinMax(bestPoint, xStep, yStep, zStep);
+
+    return { botCount: max, point: bestPoint, minMax };
+  }
+
+  return { botCount: 0 };*/
+}
+
+function SearchDirections(aPoint, aNanoBots, aRange) { 
+  let max = 0;
+  let bestPoint;
+  for (let i = 0; i < kSearchDirections.length; i++) {
+    let s = 0;
+    let point = { x: aPoint.x, y: aPoint.y, z: aPoint.z};
+    while (s < aRange) {
+      let count = ComputeBotCount(point, aNanoBots);
+      if (count > max)
+      {
+        max = count;
+        bestPoint =  { x: point.x, y: point.y, z: point.z };
+        console.log(max);
+      }
+
+      point.x += kSearchDirections[i].xD;
+      point.y += kSearchDirections[i].yD;
+      point.z += kSearchDirections[i].zD;
+
+      s++;
+    }
+  }
+
+  console.log(max + " " + JSON.stringify(bestPoint));
+}
+
 var nanoBots = [];
 
 ParseInput(kInputFilePath, nanoBots);
@@ -196,6 +320,39 @@ let minMax = FindMaxCube(nanoBots);
 
 console.log(minMax);
 
-let ret = FindMaxSignalCoord(minMax, nanoBots);
+//let ret = FindMaxSignalCoord(minMax, nanoBots);
 
-console.log(ret);
+//console.log(ret);
+
+let i = 0;
+let queue = [];
+queue.push( { botCount: 0, minMax });
+let max = 0;
+let bestPoint;
+while ( queue.length > 0) {
+
+  let pp = queue.pop();
+
+  if (pp.botCount > max) {
+    max = pp.botCount;
+    bestPoint = pp.point;
+  }
+
+  RangeSearch(pp.minMax, nanoBots, queue);
+}
+
+console.log(max);
+
+//let origin = { x: 0, y: 0, z: 0};
+
+console.log(bestPoint);
+
+//SearchDirections(bestPoint, nanoBots, 10000000);
+
+//929 {"x":26203606,"y":30727476,"z":31297501}
+
+let ff = {x:26203606, y:30727476, z:31297501};
+
+ff = { x: 34574432, y: 27408638, z: 23778473 }
+
+SearchDirections(ff, nanoBots, 10000000);
