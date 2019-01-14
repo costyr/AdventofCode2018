@@ -306,6 +306,43 @@ function SearchDirections(aPoint, aNanoBots, aRange) {
   console.log(max + " " + JSON.stringify(bestPoint));
 }
 
+function SolveUsingSegments(aNanoBots) {
+
+  let segments = [];
+
+  let origin = { x: 0, y: 0, z: 0 };
+  for (let i = 0; i < aNanoBots.length; i++) {
+    let nanoBot = aNanoBots[i];
+    let manhattanDistance = ComputeManhattanDistance(nanoBot, origin);
+
+    let entry1 = { dist: Math.max(manhattanDistance - nanoBot.r, 0), marker: 1 };
+    let entry2 = { dist: manhattanDistance + nanoBot.r, marker: -1 };
+
+    segments.push(entry1);
+    segments.push(entry2);
+  }
+
+  segments.sort(function(aEntry1, aEntry2) {
+    if (aEntry1.dist < aEntry2.dist)
+      return -1;
+    else if (aEntry1.dist > aEntry2.dist)
+      return 1;
+    else
+      return 0;
+  });
+
+  let total = { max: 0, count: 0 };
+  segments.reduce(function(aTotal, aEntry) {
+    aTotal.count += aEntry.marker;
+    if (aTotal.count > aTotal.max) {
+      aTotal.max = aTotal.count;
+      aTotal.dist = aEntry.dist;
+    }
+    return aTotal;
+  }, total);
+  console.log(total.dist);
+}
+
 var nanoBots = [];
 
 ParseInput(kInputFilePath, nanoBots);
@@ -316,7 +353,9 @@ let maxNanoBots = FindLargestSignalNanoBot(nanoBots);
 
 console.log(maxNanoBots);
 
-let minMax = FindMaxCube(nanoBots);
+SolveUsingSegments(nanoBots);
+
+/*let minMax = FindMaxCube(nanoBots);
 
 console.log(minMax);
 
@@ -355,4 +394,4 @@ let ff = {x:26203606, y:30727476, z:31297501};
 
 ff = { x: 34574432, y: 27408638, z: 23778473 }
 
-SearchDirections(ff, nanoBots, 10000000);
+SearchDirections(ff, nanoBots, 10000000);*/
