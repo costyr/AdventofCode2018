@@ -9,9 +9,9 @@ var day17Input = rawDay17Input.toString().split('\r\n');
 
 var waterStart = { x: 500, y: 0 };
 
-var xMin = 1000000;
+var xMin = Number.MAX_SAFE_INTEGER;
 var xMax = 0;
-var yMin = 1000000;
+var yMin = Number.MAX_SAFE_INTEGER;
 var yMax = 0;
 function ParseXY(aRawText) {
   let parsed = aRawText.split('=');
@@ -281,23 +281,40 @@ function StabilizeWater(aWatherPos, aGroundMap) {
   for (let i = clayLeftPos + 1; i < clayRightPos; i++)
     aGroundMap[y][i] = '~';
 
+  if ((clayRightPos - clayLeftPos) == 2) 
+  {
+    y--;
+    while ((y >= 0) && (aGroundMap[y][clayLeftPos] == '#') && (aGroundMap[y][clayLeftPos] == '#')) {
+      aGroundMap[y][clayLeftPos + 1] = '~';
+      y--;
+    }
+  }
+
   return true;
 }
 
 function GetWatherCount(aGroundMap) {
-  let count = 0;
+  let waterCount = 0;
+  let restWaterCount = 0;
   for (let y = 0; y < height; y++)
-    for (let x = 0; x < width; x++)
-      if ((aGroundMap[y][x] == '~') ||
-        (aGroundMap[y][x] == '|'))
-        count++;
+    for (let x = 0; x < width; x++) {
+      if (aGroundMap[y][x] == '~') {
+        restWaterCount ++;
+        waterCount ++;
+      }
+      else if (aGroundMap[y][x] == '|')
+        waterCount ++;
+    }
 
-  return count;
+  waterCount -= (yMin - 1);
+
+  return { waterCount, restWaterCount };
 }
 
 function FillWithWater(aWaterStart, aGroundMap) {
   let queue = [];
-  let pos = { x: aWaterStart.x, y: aWaterStart.y, d: 0 };
+  let pos = { x: aWaterStart.x, 
+    y: aWaterStart.y, d: 0 };
   do {
     pos = GetWatherNextPos(pos, aGroundMap, queue);
 
