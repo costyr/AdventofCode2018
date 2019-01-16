@@ -295,11 +295,11 @@ function StabilizeWater(aWatherPos, aGroundMap) {
 
 function GetWatherCount(aGroundMap) {
   let waterCount = 0;
-  let restWaterCount = 0;
+  let waterAtRestCount = 0;
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       if (aGroundMap[y][x] == '~') {
-        restWaterCount ++;
+        waterAtRestCount ++;
         waterCount ++;
       }
       else if (aGroundMap[y][x] == '|')
@@ -308,7 +308,7 @@ function GetWatherCount(aGroundMap) {
 
   waterCount -= (yMin - 1);
 
-  return { waterCount, restWaterCount };
+  return { waterCount, waterAtRestCount };
 }
 
 function FillWithWater(aWaterStart, aGroundMap) {
