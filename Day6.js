@@ -1,30 +1,10 @@
-const fs = require('fs');
+const util = require('./Util.js');
 
-var rawDay6Input = fs.readFileSync('./Day6Input.txt');
-
-var day6Input = rawDay6Input.toString().split('\r\n');
-
-var parsedInput = [];
-
-var xMax = 0;
-var yMax = 0;
-for (i = 0; i < day6Input.length; i++) {
-    let line = day6Input[i].split(', ');
-
-    let x = parseInt(line[0]);
-    let y = parseInt(line[1]);
-
-    if (x > xMax)
-        xMax = x;
-
-    if (y > yMax)
-        yMax = y;
-
-    parsedInput.push({ "x": x, "y": y });
-}
+var max = { "x": 0, "y": 0 };
+var parsedInput = util.ParseInput('./Day6Input.txt', util.ParseCoordElem.bind(null, max), '\r\n');
 
 var grid = [];
-var gridLength = Math.max(xMax, yMax) + 1;
+var gridLength = Math.max(max.x, max.y) + 1;
 
 for (i = 0; i < gridLength; i++) {
     grid[i] = [];
